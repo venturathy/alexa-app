@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Alexa Silva</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600&family=Orbitron:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Rajdhani', sans-serif;
+    color: #fff;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  #canvas-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+
+  canvas { display: block; }
+
+  /* HUD overlay */
+  #hud {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Nome e status */
+  #name-bar {
+    position: fixed;
+    bottom: 140px;
+    left: 0; right: 0;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  #alexa-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    letter-spacing: 6px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(180,140,255,0.8);
+    opacity: 0;
+    animation: fadeIn 2s ease 1s forwards;
+  }
+
+  #alexa-status {
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: rgba(180,140,255,0.7);
+    margin-top: 4px;
+    opacity: 0;
+    animation: fadeIn 2s ease 1.5s forwards;
+  }
+
+  /* Linha decorativa */
+  .line {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(180,140,255,0.6), transparent);
+    margin: 6px auto;
+    opacity: 0;
+    animation: fadeIn 2s ease 1.8s forwards;
+  }
+
+  /* Botões de animação */
+  #controls {
+    position: fixed;
+    bottom: 30px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 15px;
+    flex-wrap: wrap;
+    pointer-events: all;
+    opacity: 0;
+    animation: fadeIn 1s ease 2.5s forwards;
+  }
+
+  .btn-anim {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(180,140,255,0.4);
+    color: rgba(180,140,255,0.9);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 8px 14px;
+    border-radius: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn-anim:active {
+    background: rgba(180,140,255,0.2);
+    border-color: rgba(180,140,255,0.8);
+  }
+
+  /* Loading */
+  #loading {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: opacity 1s ease;
+  }
+
+  #loading-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    letter-spacing: 8px;
+    color: #fff;
+    text-shadow: 0 0 30px rgba(180,140,255,0.8);
+    margin-bottom: 30px;
+  }
+
+  #loading-bar-bg {
+    width: 200px;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    position: relative;
+  }
+
+  #loading-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, transparent, rgba(180,140,255,0.8), #fff);
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(180,140,255,0.5);
+  }
+
+  #loading-text {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.3);
+    margin-top: 15px;
+    text-transform: uppercase;
+  }
+
+  /* Partículas de fundo */
+  #particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Gradiente de fundo */
+  #bg-gradient {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(ellipse at 50% 100%, rgba(60,20,100,0.4) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div id="loading-name">ALEXA SILVA</div>
+  <div id="loading-bar-bg"><div id="loading-bar"></div></div>
+  <div id="loading-text">Inicializando...</div>
+</div>
+
+<div id="bg-gradient"></div>
+<canvas id="particles"></canvas>
+<div id="canvas-container"></div>
+
+<div id="hud">
+  <div id="name-bar">
+    <div class="line"></div>
+    <div id="alexa-name">ALEXA SILVA</div>
+    <div id="alexa-status">● ONLINE</div>
+    <div class="line"></div>
+  </div>
+</div>
+
+<div id="controls">
+  <button class="btn-anim" onclick="playAnim(0)">Idle</button>
+  <button class="btn-anim" onclick="playAnim(1)">Dançar</button>
+  <button class="btn-anim" onclick="playAnim(2)">Acenar</button>
+  <button class="btn-anim" onclick="playAnim(3)">Andar</button>
+  <button class="btn-anim" onclick="playAnim(4)">Correr</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+// Partículas de fundo
+const pCanvas = document.getElementById('particles');
+const pCtx = pCanvas.getContext('2d');
+pCanvas.width = window.innerWidth;
+pCanvas.height = window.innerHeight;
+
+const particles = [];
+for(let i = 0; i < 60; i++) {
+  particles.push({
+    x: Math.random() * pCanvas.width,
+    y: Math.random() * pCanvas.height,
+    r: Math.random() * 1.5 + 0.3,
+    speed: Math.random() * 0.3 + 0.1,
+    opacity: Math.random() * 0.4 + 0.1
+  });
+}
+
+function animParticles() {
+  pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+  particles.forEach(p => {
+    p.y -= p.speed;
+    if(p.y < 0) p.y = pCanvas.height;
+    pCtx.beginPath();
+    pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    pCtx.fillStyle = `rgba(180,140,255,${p.opacity})`;
+    pCtx.fill();
+  });
+  requestAnimationFrame(animParticles);
+}
+animParticles();
+
+// Three.js
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 1.2, 3.5);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.shadowMap.enabled = true;
+document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+// Luzes
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambientLight);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(2, 4, 3);
+dirLight.castShadow = true;
+scene.add(dirLight);
+
+const fillLight = new THREE.DirectionalLight(0xb48cff, 0.4);
+fillLight.position.set(-2, 2, -2);
+scene.add(fillLight);
+
+const rimLight = new THREE.DirectionalLight(0x8866ff, 0.3);
+rimLight.position.set(0, 3, -3);
+scene.add(rimLight);
+
+// Controls
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1, 0);
+controls.enablePan = false;
+controls.minDistance = 1.5;
+controls.maxDistance = 6;
+controls.minPolarAngle = Math.PI * 0.1;
+controls.maxPolarAngle = Math.PI * 0.85;
+controls.update();
+
+// Mixer e animações
+let mixer, animations = [], currentAction = null;
+
+// Carregar modelo
+const loader = new THREE.GLTFLoader();
+const modelURL = 'https://venturathy.github.io/alexa-app/Alexa.glb';
+
+loader.load(
+  modelURL,
+  (gltf) => {
+    const model = gltf.scene;
+    model.position.set(0, 0, 0);
+    model.scale.set(1, 1, 1);
+    scene.add(model);
+
+    // Animações
+    if(gltf.animations && gltf.animations.length > 0) {
+      mixer = new THREE.AnimationMixer(model);
+      animations = gltf.animations;
+      console.log('Animações disponíveis:', animations.map((a,i) => i + ': ' + a.name));
+      // Atualiza botões com nomes reais
+      const btns = document.querySelectorAll('.btn-anim');
+      btns.forEach((btn, i) => {
+        if(animations[i]) {
+          btn.textContent = animations[i].name || ('Anim ' + i);
+          btn.onclick = () => playAnim(i);
+        } else {
+          btn.style.display = 'none';
+        }
+      });
+      // Adiciona botões extras se tiver mais animações
+      const controls = document.getElementById('controls');
+      for(let i = btns.length; i < animations.length; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-anim';
+        btn.textContent = animations[i].name || ('Anim ' + i);
+        btn.onclick = () => playAnim(i);
+        controls.appendChild(btn);
+      }
+      playAnim(0);
+    }
+
+    // Esconde loading
+    const loading = document.getElementById('loading');
+    loading.style.opacity = '0';
+    setTimeout(() => loading.style.display = 'none', 1000);
+  },
+  (progress) => {
+    const pct = (progress.loaded / progress.total) * 100;
+    document.getElementById('loading-bar').style.width = pct + '%';
+    document.getElementById('loading-text').textContent = Math.round(pct) + '%';
+  },
+  (error) => {
+    console.error('Erro:', error);
+    document.getElementById('loading-text').textContent = 'Erro ao carregar';
+  }
+);
+
+function playAnim(index) {
+  if(!mixer || animations.length === 0) return;
+  const idx = index % animations.length;
+  if(currentAction) currentAction.fadeOut(0.3);
+  currentAction = mixer.clipAction(animations[idx]);
+  currentAction.reset().fadeIn(0.3).play();
+}
+
+// Resize
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  pCanvas.width = window.innerWidth;
+  pCanvas.height = window.innerHeight;
+});
+
+// Loop
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  if(mixer) mixer.update(delta);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
